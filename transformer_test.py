@@ -1,12 +1,3 @@
-!apt-get -qq install fonts-nanum
-!fc-cache -fv
-!rm -rf ~/.cache/matplotlib
-
-import matplotlib.pyplot as plt
-plt.rc('font', family='NanumGothic')
-import matplotlib as mpl
-mpl.rcParams['axes.unicode_minus'] = False
-
 # ===============================================================================
 # 🤖 Transformer 기반 간단한 언어모델 만들기 & 이해하기
 # ===============================================================================
@@ -584,7 +575,8 @@ def analyze_attention_mechanism(model, tokenizer, text="안녕하세요 반갑�
         attention_weights = F.softmax(scores_masked, dim=-1)
         
         print(f"\n📊 어텐션 가중치 예시 (첫 번째 헤드):")
-        attn_np = attention_weights[0, 0, :, :].cpu().numpy()
+        # attention_weights는 [batch_size, n_heads, seq_len, seq_len] 형태
+        attn_np = attention_weights[0, :, :].cpu().numpy()  # 첫 번째 헤드 선택
         for i, word in enumerate(token_words):
             # 자기 자신 제외하고 가장 높은 어텐션 찾기
             attn_row = attn_np[i].copy()
