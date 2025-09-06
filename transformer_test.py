@@ -31,15 +31,21 @@ print("=" * 80)
 
 # 텍스트 파일에서 학습 데이터를 로드
 def load_training_data(file_path='training_data.txt'):
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            texts = [line.strip() for line in f.readlines() if line.strip()]
-        print(f"📖 {len(texts)}개의 학습 문장을 로드했습니다.")
-        return texts
-    except FileNotFoundError:
-        print(f"⚠️ 파일 '{file_path}'을 찾을 수 없습니다.")
-        print("프로그램을 종료합니다.")
-        exit()
+    # 다양한 인코딩 시도
+    encodings = ['utf-8', 'cp949', 'euc-kr', 'latin-1']
+    
+    for encoding in encodings:
+        try:
+            with open(file_path, 'r', encoding=encoding) as f:
+                texts = [line.strip() for line in f.readlines() if line.strip()]
+            print(f"📖 {len(texts)}개의 학습 문장을 로드했습니다. (인코딩: {encoding})")
+            return texts
+        except (FileNotFoundError, UnicodeDecodeError):
+            continue
+    
+    print(f"⚠️ 파일 '{file_path}'을 찾을 수 없거나 인코딩 문제가 있습니다.")
+    print("프로그램을 종료합니다.")
+    exit()
 
 # 토크나이저 클래스 - 텍스트를 숫자로 변환하는 역할
 class SimpleTokenizer:
