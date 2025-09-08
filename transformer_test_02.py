@@ -1,3 +1,11 @@
+!apt-get -qq install fonts-nanum
+!fc-cache -fv
+!rm -rf ~/.cache/matplotlib
+
+import matplotlib.pyplot as plt
+plt.rc('font', family='NanumGothic')
+
+
 # Transformer 교육실습 코드
 
 import torch
