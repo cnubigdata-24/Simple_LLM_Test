@@ -43,7 +43,7 @@ print("=" * 100)
 
 # 디바이스 설정
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"\n📱 STEP 1: 환경 설정")
+print(f"\n STEP 1: 환경 설정")
 print("-" * 80)
 
 # GPU 환경 확인
@@ -80,7 +80,7 @@ config = {
 
 # CPU 환경에서는 더 빠른 학습을 위해 설정 조정
 if device.type == 'cpu':
-    print(f"\n⚠️  CPU 환경 감지 - 학습 속도 최적화")
+    print(f"\n  CPU 환경 감지 - 학습 속도 최적화")
     print("-" * 80)
     config['epochs'] = 10  # 에폭 수 감소
     config['d_model'] = 64  # 모델 크기 축소
@@ -90,7 +90,7 @@ if device.type == 'cpu':
 else:
     print(f"   예상 학습 시간: 약 1-2분")
 
-print(f"\n⚙️ 최종 하이퍼파라미터:")
+print(f"\n 최종 하이퍼파라미터:")
 for key, value in config.items():
     print(f"   {key}: {value}")
 
@@ -108,7 +108,7 @@ sample_texts = [
     "코딩을 통해 문제를 해결하는 것이 재미있어요"
 ]
 
-print(f"\n📚 STEP 2: 학습 데이터 준비")
+print(f"\n STEP 2: 학습 데이터 준비")
 print("-" * 80)
 print(f"   총 샘플 수: {len(sample_texts)}")
 print(f"   샘플 데이터 예시:")
@@ -119,7 +119,7 @@ print(f"     ... (총 {len(sample_texts)}개)")
 # 고급 토크나이저 클래스
 class AdvancedTokenizer:
     def __init__(self, texts, min_freq=1):
-        print(f"\n🔤 토크나이저 생성 중...")
+        print(f"\n 토크나이저 생성 중...")
         
         # 모든 텍스트에서 단어 추출
         all_words = []
@@ -221,7 +221,7 @@ class PositionalEncoding(nn.Module):
         pe = pe.unsqueeze(0)  # 배치 차원 추가
         self.register_buffer('pe', pe)
         
-        print(f"\n📍 위치 인코딩 초기화:")
+        print(f"\n 위치 인코딩 초기화:")
         print(f"   최대 길이: {max_len}")
         print(f"   모델 차원: {d_model}")
         print(f"   위치 인코딩 행렬 모양: {pe.shape}")
@@ -232,7 +232,7 @@ class PositionalEncoding(nn.Module):
         pos_encoding = self.pe[:, :seq_len]
         
         if show_process:
-            print(f"\n   📍 위치 인코딩 적용:")
+            print(f"\n   위치 인코딩 적용:")
             print(f"     입력 모양: {x.shape}")
             print(f"     위치 인코딩 모양: {pos_encoding.shape}")
             print(f"     위치 0의 인코딩 (처음 8차원): {safe_numpy(pos_encoding[0, 0, :8])}")
@@ -251,7 +251,7 @@ def create_causal_mask(seq_len):
     return mask == 0  # True는 허용, False는 마스킹
 
 def demonstrate_masking(tokenizer):
-    print(f"\n🎭 STEP 3: 마스킹 메커니즘 이해")
+    print(f"\nSTEP 3: 마스킹 메커니즘 이해")
     print("-" * 80)
     
     # 샘플 시퀀스 생성
@@ -274,7 +274,7 @@ def demonstrate_masking(tokenizer):
     
     # 1. 패딩 마스크
     padding_mask = create_padding_mask(token_tensor, tokenizer.pad_id)
-    print(f"\n   1️⃣ 패딩 마스크 (True=유효한 토큰, False=패딩):")
+    print(f"\n   패딩 마스크 (True=유효한 토큰, False=패딩):")
     print(f"   마스크 모양: {padding_mask.shape}")
     mask_1d = padding_mask[0, 0, 0].numpy()
     for i, (word, mask_val) in enumerate(zip(token_words, mask_1d)):
@@ -283,7 +283,7 @@ def demonstrate_masking(tokenizer):
     
     # 2. 인과적 마스크 (Causal Mask)
     causal_mask = create_causal_mask(len(tokens))
-    print(f"\n   2️⃣ 인과적 마스크 (True=참조가능, False=미래토큰):")
+    print(f"\n   인과적 마스크 (True=참조가능, False=미래토큰):")
     print(f"   마스크 모양: {causal_mask.shape}")
     print(f"   각 토큰이 참조할 수 있는 토큰들:")
     
@@ -294,7 +294,7 @@ def demonstrate_masking(tokenizer):
     
     # 3. 결합된 마스크
     combined_mask = padding_mask & causal_mask.unsqueeze(0).unsqueeze(0)
-    print(f"\n   3️⃣ 결합된 마스크 (패딩 + 인과적):")
+    print(f"\n   결합된 마스크 (패딩 + 인과적):")
     print(f"   최종 어텐션에서 사용되는 마스크")
     print(f"   마스크 행렬 시각화:")
     
@@ -324,7 +324,7 @@ class ScaledDotProductAttention(nn.Module):
         batch_size, n_heads, seq_len, d_k = Q.shape
         
         if show_process:
-            print(f"\n   🎯 스케일드 닷-프로덕트 어텐션 계산:")
+            print(f"\n   스케일드 닷-프로덕트 어텐션 계산:")
             print(f"     Q 모양: {Q.shape}")
             print(f"     K 모양: {K.shape}")  
             print(f"     V 모양: {V.shape}")
@@ -385,7 +385,7 @@ class MultiHeadAttention(nn.Module):
         
         self.attention = ScaledDotProductAttention(self.d_k, dropout)
         
-        print(f"\n🎭 멀티헤드 어텐션 초기화:")
+        print(f"\n 멀티헤드 어텐션 초기화:")
         print(f"   모델 차원: {d_model}")
         print(f"   헤드 수: {n_heads}")
         print(f"   헤드당 차원: {self.d_k}")
@@ -395,7 +395,7 @@ class MultiHeadAttention(nn.Module):
         batch_size, seq_len, d_model = query.shape
         
         if show_process:
-            print(f"\n   🎯 멀티헤드 어텐션 forward:")
+            print(f"\n   멀티헤드 어텐션 forward:")
             print(f"     입력 모양: {query.shape}")
         
         # 1. Q, K, V 변환
@@ -446,7 +446,7 @@ class PositionwiseFeedForward(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.activation = nn.ReLU()
         
-        print(f"\n🔄 피드포워드 네트워크 초기화:")
+        print(f"\n 피드포워드 네트워크 초기화:")
         print(f"   입력 차원: {d_model}")
         print(f"   은닉 차원: {d_ff}")
         print(f"   출력 차원: {d_model}")
@@ -455,7 +455,7 @@ class PositionwiseFeedForward(nn.Module):
     
     def forward(self, x, show_process=False):
         if show_process:
-            print(f"\n   🔄 피드포워드 처리:")
+            print(f"\n   피드포워드 처리:")
             print(f"     입력 모양: {x.shape}")
             print(f"     입력 값 범위: [{x.min().item():.3f}, {x.max().item():.3f}]")
         
@@ -491,14 +491,14 @@ class TransformerDecoderLayer(nn.Module):
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
         
-        print(f"\n🏗️ 트랜스포머 디코더 레이어 초기화:")
+        print(f"\n 트랜스포머 디코더 레이어 초기화:")
         print(f"   레이어 구성: Self-Attention + FFN")
         print(f"   잔차 연결 + 레이어 정규화 적용")
         print(f"   총 파라미터: {sum(p.numel() for p in self.parameters()):,}")
     
     def forward(self, x, mask=None, show_process=False):
         if show_process:
-            print(f"\n   🏗️ 디코더 레이어 처리:")
+            print(f"\n   디코더 레이어 처리:")
             print(f"     입력 모양: {x.shape}")
             print(f"     입력 평균/표준편차: {x.mean().item():.4f} / {x.std().item():.4f}")
         
@@ -550,7 +550,7 @@ class TransformerLanguageModel(nn.Module):
         self.init_weights()
         
         total_params = sum(p.numel() for p in self.parameters())
-        print(f"\n🏛️ 트랜스포머 언어 모델 완성:")
+        print(f"\n 트랜스포머 언어 모델 완성:")
         print(f"   어휘 크기: {vocab_size:,}")
         print(f"   모델 차원: {d_model}")
         print(f"   헤드 수: {n_heads}")
@@ -572,7 +572,7 @@ class TransformerLanguageModel(nn.Module):
         batch_size, seq_len = x.shape
         
         if show_process:
-            print(f"\n🚀 모델 FORWARD 시작:")
+            print(f"\n 모델 FORWARD 시작:")
             print(f"   입력 텐서 모양: {x.shape}")
             print(f"   토큰 ID 범위: [{x.min().item()}, {x.max().item()}]")
         
@@ -595,7 +595,7 @@ class TransformerLanguageModel(nn.Module):
         token_embeddings = self.token_embedding(x)
         
         if show_process:
-            print(f"\n   📝 토큰 임베딩:")
+            print(f"\n   토큰 임베딩:")
             print(f"     임베딩 후 모양: {token_embeddings.shape}")
             print(f"     임베딩 값 범위: [{token_embeddings.min().item():.3f}, {token_embeddings.max().item():.3f}]")
             print(f"     첫 번째 토큰 임베딩 (처음 8차원): {safe_numpy(token_embeddings[0, 0, :8])}")
@@ -618,7 +618,7 @@ class TransformerLanguageModel(nn.Module):
         
         for i, decoder_layer in enumerate(self.decoder_layers):
             if show_process:
-                print(f"\n   🏗️ 디코더 레이어 {i+1}/{len(self.decoder_layers)}:")
+                print(f"\n   디코더 레이어 {i+1}/{len(self.decoder_layers)}:")
             
             x, attention_weights = decoder_layer(x, combined_mask, show_process=(show_process and i == 0))
             
@@ -632,7 +632,7 @@ class TransformerLanguageModel(nn.Module):
         x = self.layer_norm(x)
         
         if show_process:
-            print(f"\n   📊 최종 정규화:")
+            print(f"\n   최종 정규화:")
             print(f"     정규화 후 평균: {x.mean().item():.4f}")
             print(f"     정규화 후 표준편차: {x.std().item():.4f}")
         
@@ -640,7 +640,7 @@ class TransformerLanguageModel(nn.Module):
         logits = self.output_projection(x)
         
         if show_process:
-            print(f"\n   🎯 출력 프로젝션:")
+            print(f"\n   출력 프로젝션:")
             print(f"     로짓 모양: {logits.shape}")
             print(f"     로짓 범위: [{logits.min().item():.3f}, {logits.max().item():.3f}]")
             
@@ -658,7 +658,7 @@ class TransformerLanguageModel(nn.Module):
 
 # 학습 데이터 준비 함수
 def prepare_training_data(tokenizer, texts, max_length=32):
-    print(f"\n📊 STEP 4: 학습 데이터 준비")
+    print(f"\n STEP 4: 학습 데이터 준비")
     print("-" * 80)
     
     # 텍스트들을 토큰화
@@ -711,7 +711,7 @@ def prepare_training_data(tokenizer, texts, max_length=32):
 
 # 학습 함수
 def train_model(model, train_inputs, train_targets, tokenizer, config):
-    print(f"\n🎓 STEP 5: 모델 학습")
+    print(f"\n STEP 5: 모델 학습")
     print("-" * 80)
     
     model.train()
@@ -757,7 +757,7 @@ def train_model(model, train_inputs, train_targets, tokenizer, config):
         
         # 첫 번째 에폭 상세 분석
         if epoch == 0:
-            print(f"\n   📈 첫 번째 에폭 상세 분석:")
+            print(f"\n   첫 번째 에폭 상세 분석:")
             with torch.no_grad():
                 sample_logits = outputs[0, 0]  # 첫 번째 샘플, 첫 번째 토큰
                 probs = F.softmax(sample_logits, dim=-1)
@@ -781,7 +781,7 @@ def train_model(model, train_inputs, train_targets, tokenizer, config):
 
 # 학습 곡선 시각화
 def plot_training_curves(losses, perplexities):
-    print(f"\n📊 STEP 6: 학습 곡선 시각화")
+    print(f"\n STEP 6: 학습 곡선 시각화")
     print("-" * 80)
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
@@ -810,7 +810,7 @@ def plot_training_curves(losses, perplexities):
 
 # 어텐션 가중치 시각화
 def visualize_attention_patterns(model, tokenizer, text="안녕하세요 좋은 하루입니다"):
-    print(f"\n🎭 STEP 7: 어텐션 패턴 분석")
+    print(f"\n STEP 7: 어텐션 패턴 분석")
     print("-" * 80)
     
     model.eval()
@@ -877,7 +877,7 @@ def visualize_attention_patterns(model, tokenizer, text="안녕하세요 좋은 
     plt.show()
     
     # 어텐션 패턴 분석
-    print(f"\n   🔍 어텐션 패턴 분석:")
+    print(f"\n   어텐션 패턴 분석:")
     for head in range(min(4, n_heads)):
         head_attention = safe_numpy(first_layer_attention[head, :valid_len, :valid_len])
         print(f"\n   헤드 {head+1} 주요 패턴:")
@@ -895,7 +895,7 @@ def visualize_attention_patterns(model, tokenizer, text="안녕하세요 좋은 
 
 # 텍스트 생성 함수 (온도 조절 가능)
 def generate_text(model, tokenizer, prompt="안녕하세요", max_length=20, temperature=1.0, top_k=5):
-    print(f"\n🎯 STEP 8: 텍스트 생성")
+    print(f"\n STEP 8: 텍스트 생성")
     print("-" * 80)
     
     model.eval()
@@ -969,7 +969,7 @@ def generate_text(model, tokenizer, prompt="안녕하세요", max_length=20, tem
 
 # 다양한 온도로 생성 비교
 def compare_generation_temperatures(model, tokenizer, prompt="인공지능은"):
-    print(f"\n🌡️ STEP 9: 온도별 생성 비교")
+    print(f"\n STEP 9: 온도별 생성 비교")
     print("-" * 80)
     
     temperatures = [0.1, 0.5, 1.0, 1.5, 2.0]
@@ -1016,7 +1016,7 @@ def print_tensor_summary(tensor_array, name, show_full=False):
 
 # 단계별 디버깅 및 시각화 함수
 def debug_transformer_step_by_step(model, tokenizer, sample_text="안녕하세요 좋은"):
-    print(f"\n🔍 트랜스포머 단계별 디버깅")
+    print(f"\n 트랜스포머 단계별 디버깅")
     print("=" * 80)
     print(f"분석할 텍스트: '{sample_text}'")
     
@@ -1033,7 +1033,7 @@ def debug_transformer_step_by_step(model, tokenizer, sample_text="안녕하세�
     input_tensor = torch.tensor([tokens]).to(device)
     token_words = [tokenizer.id_to_word[id] for id in tokens]
     
-    print(f"\n1️⃣ 입력 토큰 처리")
+    print(f"\n 입력 토큰 처리")
     print("-" * 40)
     print(f"Input token ids: {safe_numpy(input_tensor)}")
     print(f"Token mapping:")
@@ -1046,19 +1046,19 @@ def debug_transformer_step_by_step(model, tokenizer, sample_text="안녕하세�
     with torch.no_grad():
         # 토큰 임베딩
         token_embeddings = model.token_embedding(input_tensor)
-        print(f"\n2️⃣ 토큰 임베딩 (shape: {token_embeddings.shape})")
+        print(f"\n 토큰 임베딩 (shape: {token_embeddings.shape})")
         print("-" * 40)
         print_tensor_summary(safe_numpy(token_embeddings[0]), "Token embeddings")
         
         # 위치 인코딩 추가
         token_embeddings_scaled = token_embeddings * math.sqrt(model.d_model)
         x = model.position_encoding(token_embeddings_scaled)
-        print(f"\n3️⃣ 위치 인코딩 추가 (shape: {x.shape})")
+        print(f"\n 위치 인코딩 추가 (shape: {x.shape})")
         print("-" * 40)
         print_tensor_summary(safe_numpy(x[0]), "After adding positional encoding")
         
         # 멀티헤드 어텐션 분석
-        print(f"\n4️⃣ 멀티헤드 어텐션 상세 분석")
+        print(f"\n 멀티헤드 어텐션 상세 분석")
         print("-" * 40)
         
         first_attention = model.decoder_layers[0].self_attention
@@ -1123,18 +1123,18 @@ def debug_transformer_step_by_step(model, tokenizer, sample_text="안녕하세�
         
         # 전체 멀티헤드 어텐션 실행
         attn_output, _ = first_attention(x, x, x, combined_mask)
-        print(f"\n5️⃣ 멀티헤드 어텐션 최종 출력 (shape: {attn_output.shape})")
+        print(f"\n 멀티헤드 어텐션 최종 출력 (shape: {attn_output.shape})")
         print("-" * 40)
         print_tensor_summary(safe_numpy(attn_output[0]), "Final MHA output")
         
         # 피드포워드 네트워크
         ff_output = model.decoder_layers[0].feed_forward(attn_output)
-        print(f"\n6️⃣ 피드포워드 네트워크 (shape: {ff_output.shape})")
+        print(f"\n 피드포워드 네트워크 (shape: {ff_output.shape})")
         print("-" * 40)
         print_tensor_summary(safe_numpy(ff_output[0]), "Feed-forward output")
         
         # 잔차 연결 및 레이어 정규화
-        print(f"\n7️⃣ 잔차 연결 및 레이어 정규화")
+        print(f"\n 잔차 연결 및 레이어 정규화")
         print("-" * 40)
         
         x_after_attn = model.decoder_layers[0].norm1(x + model.decoder_layers[0].dropout(attn_output))
@@ -1144,7 +1144,7 @@ def debug_transformer_step_by_step(model, tokenizer, sample_text="안녕하세�
         print(f"After feedforward + residual + norm: Mean={x_final.mean().item():.4f}, Std={x_final.std().item():.4f}")
         
         # 최종 출력 프로젝션
-        print(f"\n8️⃣ 최종 출력 및 예측")
+        print(f"\n 최종 출력 및 예측")
         print("-" * 40)
         
         # 모든 레이어 통과
@@ -1170,7 +1170,7 @@ def debug_transformer_step_by_step(model, tokenizer, sample_text="안녕하세�
                     prob = F.softmax(pos_logits, dim=-1)[idx].item()
                     print(f"    {i+1}. {predicted_word} (logit: {val.item():.3f}, prob: {prob:.3f})")
         
-        print(f"\n9️⃣ 요약")
+        print(f"\n 요약")
         print("-" * 40)
         print(f"✓ 입력: '{sample_text}' → {len([t for t in tokens if t != tokenizer.pad_id])} 토큰")
         print(f"✓ 처리: 임베딩 → 위치인코딩 → {len(model.decoder_layers)}개 레이어 → 출력({logits.shape})")
@@ -1196,7 +1196,7 @@ def main():
     
     # 단계별 디버깅 (학습 전 - 초기 상태)
     print(f"\n" + "="*100)
-    print("🔍 학습 전 모델 상태 분석")
+    print(" 학습 전 모델 상태 분석")
     print("="*100)
     debug_transformer_step_by_step(model, tokenizer, "안녕하세요 좋은")
     
@@ -1210,7 +1210,7 @@ def main():
     
     # 단계별 디버깅 (학습 후 - 훈련된 상태)
     print(f"\n" + "="*100)
-    print("🔍 학습 후 모델 상태 분석")
+    print(" 학습 후 모델 상태 분석")
     print("="*100)
     debug_transformer_step_by_step(model, tokenizer, "안녕하세요 좋은")
     
@@ -1226,11 +1226,11 @@ def main():
     # 온도별 생성 비교
     compare_generation_temperatures(model, tokenizer)
     
-    print(f"\n🎉 STEP 10: 학습 완료!")
+    print(f"\n STEP 10: 학습 완료!")
     print("=" * 80)
     print("Transformer 언어 생성 모델의 핵심 개념들을 모두 학습했습니다!")
     print()
-    print("📚 학습한 핵심 개념들:")
+    print(" 학습한 핵심 개념들:")
     print("   1. 토크나이제이션: 텍스트를 숫자로 변환")
     print("   2. 임베딩: 토큰을 벡터로 표현") 
     print("   3. 위치 인코딩: 순서 정보 추가")
@@ -1246,14 +1246,14 @@ def main():
     print("   13. 온도 조절: 생성 다양성 제어")
     print("   14. Top-K 샘플링: 품질 있는 다양성")
     print()
-    print("🔬 핵심 수식들:")
+    print(" 핵심 수식들:")
     print("   • Attention(Q,K,V) = softmax(QK^T/√d_k)V")
     print("   • MultiHead = Concat(head_1,...,head_h)W^O")  
     print("   • LayerNorm(x + Sublayer(x))")
     print("   • PE(pos,2i) = sin(pos/10000^(2i/d_model))")
     print("   • PE(pos,2i+1) = cos(pos/10000^(2i/d_model))")
     print()
-    print("🎯 실용적 활용:")
+    print(" 실용적 활용:")
     print("   • 다음 단어 예측 (언어 모델링)")
     print("   • 창의적 텍스트 생성")
     print("   • 대화 시스템")
