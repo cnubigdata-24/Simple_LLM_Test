@@ -5,6 +5,8 @@
 import matplotlib.pyplot as plt
 plt.rc('font', family='NanumGothic')
 
+!{sys.executable} -m pip install seaborn
+
 # Transformer 언어 생성 모델 - GPT 스타일 Decoder-Only
 
 import torch
