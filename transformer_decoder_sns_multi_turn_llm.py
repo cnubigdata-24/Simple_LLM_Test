@@ -20,17 +20,20 @@ import gc
 # GPU and Hyperparameter Configuration
 
 # GPU setup
-def setup_device_and_mode():
+def setup_device_and_mode():    
     print(f"\n{'='*10} GPU Environment {'='*10}")
+    print(f"‧ PyTorch version: {torch.__version__}")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     if not torch.cuda.is_available():
         print("GPU is not available. Setting CPU mode.")
         return device, "CPU"
+    else:          
+        print(f"‧ CUDA 버전: {torch.version.cuda}")
     
     gpu_name = torch.cuda.get_device_name()
-    gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1e9
+    gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1e9    
     
     print(f"‧ GPU: {gpu_name}")
     print(f"‧ GPU Memory: {gpu_memory:.1f}GB")
