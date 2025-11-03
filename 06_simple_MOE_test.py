@@ -55,7 +55,7 @@ class GatingNetwork(nn.Module):
         
         return gates
     
-    # 전문가 사용 균형을 위한 손실 계산
+    # 전문가 사용 로드밸런싱 손실 계산 => 전체 손실 값에 반영
     def _compute_load_balance_loss(self, gates):
         avg_gates = gates.mean(dim=0)
         uniform_dist = torch.ones_like(avg_gates) / len(avg_gates)
@@ -147,7 +147,7 @@ class TextMoE(nn.Module):
             'savings_ratio': 100 - usage_ratio  # 절감률
         }
     
-    # 순전파 (학습 시 사용)
+    # 순전파 (학습 시)
     def forward(self, texts):
         # 텍스트를 임베딩으로 변환
         with torch.no_grad():
