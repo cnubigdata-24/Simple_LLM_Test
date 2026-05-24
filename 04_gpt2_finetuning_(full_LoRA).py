@@ -33,7 +33,7 @@ else:
 # 토크나이저: GPT-2는 Byte-Pair Encoding (BPE) 사용
 # 어휘사전: 50,257개
 # Causal Language Model: 왼쪽에서 오른쪽으로 순차적으로 텍스트를 생성
-# 대화형 AI, 텍스트 완성 등에 적합한 구조
+# 대화형 AI, 텍스트 완성 등에 적합한 구조입니다
 
 # Part 1: 기본 파인튜닝 #######################################################################################
 model_name = "gpt2"
@@ -51,6 +51,7 @@ print(f"토큰 어휘 크기: {len(tokenizer):,}")
 print(f"최대 시퀀스 길이: {tokenizer.model_max_length}")
 
 #-------------------------------------------------
+
 # 파인튜닝용 콜센터 문의-응답 데이터
 training_data = {
     "text": [
@@ -78,7 +79,8 @@ print(f"\n[샘플 데이터 2]")
 print(dataset[3]['text'])
 
 #-------------------------------------------------
-# 토큰화: 텍스트를 토큰(숫자)으로 변환
+
+# 토큰화: 텍스트를 토큰(숫자)으로 변환하는 과정
 def tokenize_function(examples):
 
     return tokenizer(
@@ -102,15 +104,17 @@ print(f"\n첫 번째 샘플의 토큰 개수: {len(tokenized_dataset[0]['input_i
 print(f"첫 번째 샘플의 토큰 예시 (처음 20개): {tokenized_dataset[0]['input_ids'][:20]}")
 
 #-------------------------------------------------
+
 # 데이터 콜레이터 설정: 배치 단위로 데이터를 묶어주는 역할
 data_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
     mlm=False # GPT-2는 Causal LM, Masked Language Modeling을 사용하지 않음 (MLM은 BERT 같은 양방향 모델에서 사용)
 )
 
-print("완료")
+print("데이터 콜레이터 설정 완료")
 
 #-------------------------------------------------
+
 # 기본 파인튜닝 실행
 
 # 하이퍼 파라미터 설정
@@ -149,12 +153,13 @@ print(f"총 학습 스텝: {len(dataset) // training_args.per_device_train_batch
 print("\n학습 중...\n")
 
 # 실제 학습 시작
-# 모델의 모든 파라미터(약 124M개)가 업데이트됩니다
+# 모델의 모든 파라미터(약 124M개)가 업데이트
 trainer.train()
 
 print("\n파인튜닝 완료!")
 
 #-------------------------------------------------
+
 # 파인튜닝 모델 테스트
 
 # 텍스트 생성 함수
@@ -199,6 +204,7 @@ for i, prompt in enumerate(test_prompts, 1):
 !pip install -q peft
 
 #-------------------------------------------------
+
 # LoRA 모델 준비
 from peft import get_peft_model, LoraConfig, TaskType
 
@@ -228,6 +234,7 @@ print("="*60)
 lora_model.print_trainable_parameters()
 
 #-------------------------------------------------
+
 # LoRA 파인튜닝 실행
 
 # LoRA 학습 설정
@@ -267,6 +274,7 @@ lora_trainer.train()
 print("\nLoRA 파인튜닝 완료!")
 
 #-------------------------------------------------
+
 # LoRA 모델 테스트
 print("="*60)
 print("LoRA 파인튜닝 모델 테스트 결과")
