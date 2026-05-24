@@ -74,8 +74,6 @@ training_data = {
         "질문: 회원 탈퇴는 어떻게 하나요?\n답변: 마이페이지 > 설정 > 회원 탈퇴에서 신청하실 수 있습니다. 탈퇴 시 적립금과 쿠폰은 소멸되며, 처리 완료까지 최대 3일 소요됩니다.",
     ]
 }
-
-
 dataset = Dataset.from_dict(training_data)
 
 def tokenize_fn(examples):
@@ -96,7 +94,6 @@ def generate_response(model, prompt, max_tokens=100):
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 def train_model(model, output_dir, epochs, lr, label):
-    """학습 실행 후 소요 시간(초) 반환"""
     args = TrainingArguments(
         output_dir=output_dir, num_train_epochs=epochs,
         per_device_train_batch_size=2, learning_rate=lr,
