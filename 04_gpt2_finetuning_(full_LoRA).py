@@ -129,10 +129,10 @@ full_trainable_params = sum(p.numel() for p in full_model.parameters() if p.requ
 full_time = train_model(full_model, "./full_ft_model", epochs=50, lr=5e-5, label="Full Fine-Tuning")
 
 
-# ─── Part 2: LoRA Fine-Tuning (원본 가중치는 동결(freeze)하고, 저랭크 행렬(r=8)만 학습) ───
+# ─── Part 2: LoRA Fine-Tuning (원본 가중치는 freezeing, 저랭크 행렬(r=8)만 학습) ───
 
-# - 100 에폭 (학습 가능한 파라미터가 적으므로 더 많이 반복)
-# - 학습률 3e-4 (적은 파라미터를 더 적극적으로 업데이트)
+# - Epoch 100 (파라미터가 적어서 더 많이 반복)
+# - Learning Rate 3e-4 (파라미터가가 적어서 더 적극적으로 업데이트)
 
 lora_base_model = AutoModelForCausalLM.from_pretrained(model_name)
 lora_base_model.config.pad_token_id = tokenizer.eos_token_id
