@@ -1,4 +1,4 @@
-## 실습 개요: 
+## 실습 개요: GPU 사용 필수 (CPU 단독 실행 불가)
 # Llama 3.2 1B 모델을 Unsloth와 QLoRA를 사용하여 고객 문의를 5개 카테고리로 자동 분류
 
 ## 분류 카테고리 (5개)
@@ -12,14 +12,15 @@
 # 총 13개 (카테고리별 2-3개)
 # 실제 콜센터 문의 기반
 
-## 기술 스택
+## 기술 스택 및 하드웨어 제약
 # 모델: Llama 3.2 1B Instruct (가볍고 빠름)
-# 최적화: Unsloth (2-5배 빠른 학습)
-# 파인튜닝: QLoRA (4-bit quantization)
-# 메모리: 약 2-3GB VRAM
+# 최적화: Unsloth (NVIDIA GPU 전용 CUDA 커널 가속 기술 - CPU 미지원)
+# 파인튜닝: QLoRA (4-bit quantization - bitsandbytes 라이브러리가 GPU 연산 필수 요구)
+# 메모리: 약 2-3GB VRAM 필요 (Google Colab 무료 버전인 T4 GPU에서 충분히 작동)
 
 #----------------------------------------------------
 
+# [GPU 필수] Unsloth 및 종속 패키지(xformers, bitsandbytes 등)는 GPU가 인식되어야만 정상 설치/로드
 !pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
 !pip install --no-deps "xformers==0.0.27" trl peft accelerate bitsandbytes
 
@@ -32,33 +33,33 @@ from trl import SFTTrainer
 from datasets import Dataset
 import pandas as pd
 
-# 시스템 정보 출력
+# 시스템 정보 및 GPU 활성화 여부 확인
 print("="*60)
-print("시스템 정보")
+print("시스템 하드웨어 정보 점검")
 print("="*60)
 print(f"PyTorch 버전: {torch.__version__}")
-print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
+print(f"CUDA(GPU) 사용 가능 여부: {torch.cuda.is_available()}")
 
 if torch.cuda.is_available():
-    print(f"GPU: {torch.cuda.get_device_name(0)}")
-    print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f}GB")
-    print("\nGPU 모드 - 빠른 학습 가능")
+    print(f"사용 중인 GPU: {torch.cuda.get_device_name(0)}")
+    print(f"사용 가능한 VRAM: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f}GB")
+    print("\n[성공] GPU 모드가 활성화, 실습 진행...")
 else:
-    print("\nCPU 모드 - 학습이 다소 느릴 수 있습니다")
-    print("Google Colab에서는: 런타임 > 런타임 유형 변경 > GPU 선택")
+    print("\n[경고/에러] 현재 CPU 모드, 모델 로드 및 학습 불가능 !!!")
+    print("▶ 코랩 상단 메뉴에서 [런타임] > [런타임 유형 변경] > 하드웨어 가속기를 [T4 GPU]로 선택 후 다시 실행.")
+    
+    assert torch.cuda.is_available(), "GPU가 없습니다. 런타임 유형을 GPU로 변경해 주세요."
 
 #----------------------------------------------------
 
 # 하이퍼파라미터 설정
 max_seq_length = 512  # 문의 텍스트는 짧으므로 512면 충분
-load_in_4bit = True   # QLoRA: 4-bit quantization 사용 (메모리 1/4로 절감)
+load_in_4bit = True   # QLoRA: 4-bit quantization 사용 (bitsandbytes 가 작동하기 위해 GPU 필수)
 dtype = None          # 자동으로 최적 dtype 선택 (bfloat16 or float16)
 
-# Llama 3.2 1B Instruct 모델 로드: Unsloth에서 최적화한 버전
+print("\n원격 저장소로부터 모델 로딩 중...")
 
-print("\n모델 로딩 중...")
-
-# FastLanguageModel: Unsloth의 핵심 클래스, 일반 로드보다 2-3배 빠름
+# FastLanguageModel: Unsloth 최적화 커널을 사용해 4-bit 양자화 모델을 GPU VRAM에 직접 올립니다.
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name = "unsloth/Llama-3.2-1B-Instruct",
     max_seq_length = max_seq_length,
@@ -69,7 +70,7 @@ model, tokenizer = FastLanguageModel.from_pretrained(
 
 print(f"\n모델 로드 완료!")
 print(f"모델: Llama 3.2 1B Instruct")
-print(f"Quantization: 4-bit (QLoRA)")
+print(f"Quantization: 4-bit (QLoRA 연산 준비 완료)")
 
 #----------------------------------------------------
 
@@ -85,14 +86,14 @@ model = FastLanguageModel.get_peft_model(
     target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
                       "gate_proj", "up_proj", "down_proj"],
 
-    use_gradient_checkpointing = "unsloth",  # Unsloth 최적화된 gradient checkpointing
+    use_gradient_checkpointing = "unsloth",  # Unsloth의 GPU 메모리 최적화 기법 적용
 
     random_state = 42,  # 재현성을 위한 시드 고정
 )
 
 print("\nLoRA 설정 완료!")
 print(f"LoRA rank (r): 16")
-print(f"학습 파라미터: 전체의 약 1% 미만")
+print(f"학습 파라미터: 전체의 약 1% 미만 (빠른 자원 업데이트 가능)")
 
 #----------------------------------------------------
 
@@ -184,7 +185,6 @@ print(f"총 {len(df)}개 샘플")
 print("\n카테고리별 분포:")
 print(df['output'].value_counts())
 print("\n샘플 데이터:")
-
 print(df.head(3))
 
 #----------------------------------------------------
@@ -201,7 +201,6 @@ alpaca_prompt = """Below is an instruction that describes a task, paired with an
 ### Response:
 {}"""
 
-# EOS 토큰: 문장의 끝을 나타내는 특수 토큰, 모델이 언제 생성을 멈춰야 하는지 알려줌
 EOS_TOKEN = tokenizer.eos_token
 
 # 데이터를 Alpaca 포맷으로 변환
@@ -212,7 +211,6 @@ def formatting_prompts_func(examples):
 
     texts = []
     for instruction, input_text, output in zip(instructions, inputs, outputs):
-        # Alpaca 템플릿에 데이터 삽입 + EOS 토큰 추가
         text = alpaca_prompt.format(instruction, input_text, output) + EOS_TOKEN
         texts.append(text)
 
@@ -235,37 +233,24 @@ print(dataset[0]['text'][:300] + "...")
 
 # 학습 설정
 training_args = TrainingArguments(
-    output_dir = "./outputs_classification", # 결과 저장 디렉토리
+    output_dir = "./outputs_classification", 
 
-    # 배치 크기: 2 (작은 데이터셋이므로 작게 설정)
     per_device_train_batch_size = 2,
-
-    # 그래디언트 누적: 4번 누적 후 업데이트 (실제 배치 크기 = 2 x 4 = 8)
     gradient_accumulation_steps = 4,
-
-    # Warmup: 처음 10% 동안 학습률을 점진적으로 증가
     warmup_ratio = 0.1,
-
     num_train_epochs = 3,
     learning_rate = 2e-4,
 
-    # 16비트 연산 사용: bfloat16이 지원되면 사용, 아니면 float16
+    # GPU 가용 하드웨어 가속 정밀도 설정
     fp16 = not is_bfloat16_supported(),
     bf16 = is_bfloat16_supported(),
 
     logging_steps = 1,
-
-    # Optimizer: 8bit AdamW (메모리 효율적)
-    optim = "adamw_8bit",
-
-    # Weight decay: 가중치 감소 (과적합 방지)
+    optim = "adamw_8bit", # GPU 효율 증대를 위한 8비트 AdamW 옵티마이저
     weight_decay = 0.01,
-
-    # Learning rate scheduler: cosine (학습률을 코사인 곡선으로 감소)
     lr_scheduler_type = "cosine",
-
     seed = 42,
-    report_to = "none", # 외부 로깅 비활성화
+    report_to = "none", 
 )
 
 print("학습 설정 완료!")
@@ -274,31 +259,30 @@ print(f"그래디언트 누적: {training_args.gradient_accumulation_steps}")
 print(f"실제 배치 크기: {training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps}")
 print(f"Epochs: {training_args.num_train_epochs}")
 print(f"학습률: {training_args.learning_rate}")
-print(f"총 학습 스텝: 약 {len(dataset) // (training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps) * training_args.num_train_epochs}")
 
 #----------------------------------------------------
 
-# SFTTrainer
+# SFTTrainer 초기화
 trainer = SFTTrainer(
     model = model,
     tokenizer = tokenizer,
     train_dataset = dataset,
-    dataset_text_field = "text",  # 텍스트가 들어있는 필드명
+    dataset_text_field = "text",  
     max_seq_length = max_seq_length,
     args = training_args,
-    packing = False,  # 여러 샘플을 하나로 묶지 않음
+    packing = False,  
 )
 
 print("="*60)
-print("학습 시작")
+print("GPU 연산 가속 학습 시작")
 print("="*60)
 
 print(f"학습 데이터: {len(dataset)}개")
 print(f"Epochs: {training_args.num_train_epochs}")
-print(f"예상 시간: GPU 3-5분, CPU 15-20분")
+print(f"예상 소요 시간: 약 1~3분 내외 (코랩 T4 GPU 적용 기준)")
 print("\n학습 중...\n")
 
-# 학습 실행
+# 학습 실행 (GPU 내부에서 병렬 연산 처리)
 trainer.train()
 
 print("\n" + "="*60)
@@ -307,7 +291,7 @@ print("="*60)
 
 #----------------------------------------------------
 
-# 추론 모드로 전환: 학습 최적화 해제, 일반 모드로 사용
+# 추론 모드로 전환 (학습 상태 구조를 해제하고 연산 최적화)
 FastLanguageModel.for_inference(model)
 
 # 고객 문의 분류 함수
@@ -315,23 +299,21 @@ def classify_inquiry(inquiry_text):
     instruction = "다음 고객 문의를 카테고리로 분류하세요. 카테고리는 배송, 반품, 결제, 제품, 계정 중 하나입니다."
     prompt = alpaca_prompt.format(instruction, inquiry_text, "")
 
-    # 토큰화
-    inputs = tokenizer([prompt], return_tensors="pt").to("cuda" if torch.cuda.is_available() else "cpu")
+    # 모델이 GPU에 할당되어 있으므로 입력 토큰 역시 반드시 .to("cuda")로 GPU에 전달되어야 합니다.
+    inputs = tokenizer([prompt], return_tensors="pt").to("cuda")
 
-    # 텍스트 생성
+    # 텍스트 생성 연산
     outputs = model.generate(
         **inputs,
-        max_new_tokens=10,  # 카테고리 이름만 생성
-        temperature=0.1,    # 낮은 temperature = 더 결정적인 출력
+        max_new_tokens=10,  
+        temperature=0.1,    
         top_p=0.9,
         do_sample=True,
         pad_token_id=tokenizer.eos_token_id
     )
 
-    # 디코딩
     result = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-    # Response 만 추출
     if "### Response:" in result:
         prediction = result.split("### Response:")[1].strip()
     else:
@@ -339,17 +321,15 @@ def classify_inquiry(inquiry_text):
 
     return prediction
 
-print("분류 함수 준비 완료!")
+print("분류 추론 함수 준비 완료!")
 
 #----------------------------------------------------
 
 # 학습 데이터 테스트 1
-
 print("="*60)
-print("테스트 1: 학습 데이터로 테스트")
+print("테스트 1: 학습 데이터 검증")
 print("="*60)
 
-# 학습 데이터로 테스트
 test_cases_trained = [
     "주문한 상품이 언제 도착하나요?",
     "반품하고 싶은데 어떻게 하나요?",
@@ -372,13 +352,11 @@ for i, (inquiry, expected) in enumerate(zip(test_cases_trained, expected_categor
 
 #----------------------------------------------------
 
-# 미학습 데이터 테스트 (일반화 확인)
-
+# 미학습 데이터 테스트 (일반화 기능 검증)
 print("\n" + "="*60)
-print("테스트 2: 새로운 문의로 테스트 (학습에 없던 문의)")
+print("테스트 2: 새로운 문의 검증 (학습에 쓰이지 않은 실전 텍스트)")
 print("="*60)
 
-# 학습에 없던 새로운 데이터
 test_cases_new = [
     {"inquiry": "택배가 아직 안 왔어요.", "expected": "배송"},
     {"inquiry": "색상을 바꾸고 싶은데 교환 되나요?", "expected": "반품"},
@@ -409,23 +387,20 @@ for i, test_case in enumerate(test_cases_new, 1):
     print(f"결과: {'O 정확' if is_correct else 'X 오답'}")
     print("-"*60)
 
-# 정확도 계산
+# 정확도 산출
 accuracy = (correct / total) * 100
 print(f"\n" + "="*60)
-print(f"새로운 문의 정확도: {correct}/{total} = {accuracy:.1f}%")
+print(f"새로운 문의 테스트 결과 정확도: {correct}/{total} = {accuracy:.1f}%")
 print("="*60)
 
 #----------------------------------------------------
 
-# 모델저장: LoRA 어댑터만 저장 (용량 작음, 약 10-50MB)
+# 모델 가중치(LoRA 가중치만 격리 추출) 로컬 저장
 model.save_pretrained("classification_lora_model")
 tokenizer.save_pretrained("classification_lora_model")
 
-print("\n모델 저장 완료!")
+print("\n파인튜닝된 어댑터 모델 저장 완료!")
 print("저장 위치: ./classification_lora_model")
-
-print("\n저장된 파일:")
-print("- LoRA 어댑터 (adapter_model.safetensors)")
-
-print("- Tokenizer 설정")
-print("\n용량: 약 10-50MB (전체 모델의 1% 미만)")
+print("\n생성 파일 정보:")
+print("- LoRA 레이어 가중치 (adapter_model.safetensors, 약 10~50MB 내외)")
+print("- Tokenizer 환경 메타데이터")
